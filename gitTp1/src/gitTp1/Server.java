@@ -1,6 +1,8 @@
 package gitTp1;
 
 import java.net.*;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.io.*;
 import javax.imageio.ImageIO;
@@ -14,8 +16,10 @@ public class Server {
 	
 	public static void main(String[] args) throws Exception {
 		int clientNumber = 0;
+		writeJson write = new writeJson();
+		write.addUser("defaultUser", "1234");
 		
-		//INFORMATION SERVEUR
+		
 		InputConnection inputInfo = new InputConnection();
 		Map<String,String> connectionInfo = inputInfo.getInfo();
 		
@@ -44,8 +48,6 @@ public class Server {
 	private static class ClientHandler extends Thread{
 		private Socket socket;
 		private int clientNumber;
-		
-		//RECUPERATION DE LA HASHMAP CONTENANT TOUS LES USERS
 		writeJson write = new writeJson();
 		HashMap<String, String> users =  write.getHasmapJson();
 		
@@ -54,7 +56,7 @@ public class Server {
 		public ClientHandler(Socket socket, int clientNumber) {
 			this.socket = socket;
 			this.clientNumber = clientNumber;
-			//affichage dans la console serveur des utilisateurs (pour correction)
+
 			System.out.println(users);
 			
 			System.out.println("New connection with client#" + clientNumber + " at " + socket);	
@@ -62,34 +64,30 @@ public class Server {
 		
 		public void run() {
 			try {
-				
 			DataOutputStream out = new DataOutputStream(socket.getOutputStream());
 				
 			out.writeUTF("Hello from Server - you are client#" + clientNumber);
 				
+
+			// début de la réception sur le stream
 			DataInputStream in = new DataInputStream(socket.getInputStream());
 			System.out.println("début réception");
 			Sobel filtre = new Sobel();
 
-			//récupération userName du client
+			//récupération username
 			String userName = in.readUTF();
-			//vérifications si le client s'est déjà connecté
-				//client connu
 			if (users.containsKey(userName)){
 				out.writeByte(1);
-				//récupération mot de passe
 				String mdp = in.readUTF();
-				//vérification du mot de passe
+				System.out.println(mdp.equals(users.get(userName)));
 				while (mdp.equals(users.get(userName))==false) {
 					out.writeByte(1);
 					mdp = in.readUTF();
 				}
 				out.writeByte(2);
 			}
-				//client inconnu
 			if(users.containsKey(userName)==false) {
 				out.writeByte(3);
-				//création d'un mot de passe au hasard
 				String Creermdp = "";
 				Random rand = new Random();
 				for(int i = 0 ; i < 6 ; i++){
@@ -97,7 +95,6 @@ public class Server {
 				 Creermdp += c;
 				}
 				out.writeUTF(Creermdp);
-				//ajout du nouvel utilisateur
 				write.addUser( userName , Creermdp );
 				
 				out.writeByte(2);
@@ -106,7 +103,13 @@ public class Server {
 
 			//récupération de l'image envoyée
 			BufferedImage image = ImageIO.read(in);
-			System.out.println("Image reçue par serveur");
+			String dateFormat = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd@HH:mm:ss"));
+			String socketIP = socket.getInetAddress().toString().substring(1);
+			String prefix = "[" + userName + " - " + socketIP + ":" + socket.getPort() + " - " + dateFormat + "]: Image photoDe"+userName+".jpg reçue\r\n"
+					+ "pour traitement.\r\n"
+					+ "";
+	
+			System.out.println(prefix);
 			BufferedImage fImage = filtre.process(image);
 			System.out.println("filtre appliqué sur l'image");
 
