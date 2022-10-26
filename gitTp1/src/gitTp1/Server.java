@@ -5,6 +5,8 @@ import java.util.Map;
 import java.io.*;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
+import java.util.HashMap; 
+import java.util.Random;
 
 
 public class Server {
@@ -44,36 +46,73 @@ public class Server {
 	private static class ClientHandler extends Thread{
 		private Socket socket;
 		private int clientNumber;
+		Map<String, String> users = new HashMap<>();
+		
+		
 		
 		public ClientHandler(Socket socket, int clientNumber) {
 			this.socket = socket;
 			this.clientNumber = clientNumber;
+			
+			users.put( "user1" , "motdepasse" );
+			users.put( "user2" , "motdepasse2" );
+			System.out.println(users);
 			
 			System.out.println("New connection with client#" + clientNumber + " at " + socket);	
 		}
 		
 		public void run() {
 			try {
-				DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+			DataOutputStream out = new DataOutputStream(socket.getOutputStream());
 				
-				out.writeUTF("Hello from Server - you are client#" + clientNumber);
-				Sobel filtre = new Sobel();
-				/*in*/
-				// début de la réception sur le stream
-				DataInputStream in = new DataInputStream(socket.getInputStream());
-				String userName = in.readUTF();
+			out.writeUTF("Hello from Server - you are client#" + clientNumber);
 				
-				System.out.println("début réception");
-				//récupération de l'image envoyée
-				BufferedImage image = ImageIO.read(in);
-				System.out.println("Image reçue par serveur");
-				BufferedImage fImage = filtre.process(image);
-				System.out.println("filtre appliqué sur l'image");
-				
-				ImageIO.write(fImage, "PNG", out);
-				System.out.println("image renvoyée au client");
-				
-				
+
+			// début de la réception sur le stream
+			DataInputStream in = new DataInputStream(socket.getInputStream());
+			System.out.println("début réception");
+			Sobel filtre = new Sobel();
+
+			//récupération username
+			String userName = in.readUTF();
+			if (users.containsKey(userName)){
+				out.writeByte(1);
+				String mdp = in.readUTF();
+				System.out.println(mdp);
+				System.out.println(users.get(userName));
+				System.out.println(mdp.equals(users.get(userName)));
+				//int essai = 0;
+				while (mdp.equals(users.get(userName))==false) {
+					out.writeByte(1);
+					out.writeUTF("Mot de passe incorrect :");
+					mdp = in.readUTF();
+					//essai++;
+				}
+				out.writeByte(2);
+			}
+			if(users.containsKey(userName)==false) {
+				out.writeByte(3);
+				String Creermdp = "";
+				Random rand = new Random();
+				for(int i = 0 ; i < 6 ; i++){
+				 char c = (char)(rand.nextInt(26) + 97);
+				 Creermdp += c;
+				 System.out.print(Creermdp);
+				}
+				out.writeUTF(Creermdp);
+				users.addUser( userName , Creermdp );
+				out.writeByte(2);
+			}
+
+
+			//récupération de l'image envoyée
+			BufferedImage image = ImageIO.read(in);
+			System.out.println("Image reçue par serveur");
+			BufferedImage fImage = filtre.process(image);
+			System.out.println("filtre appliqué sur l'image");
+
+			ImageIO.write(fImage, "PNG", out);
+			System.out.println("image renvoyée au client");	
 			}
 			catch(IOException e) {
 				System.out.println("Error handling client#" + clientNumber + " : " + e);
