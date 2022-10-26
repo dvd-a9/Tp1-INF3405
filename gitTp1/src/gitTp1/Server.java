@@ -14,10 +14,8 @@ public class Server {
 	
 	public static void main(String[] args) throws Exception {
 		int clientNumber = 0;
-		writeJson write = new writeJson();
-		write.addUser("defaultUser", "1234");
 		
-		
+		//INFORMATION SERVEUR
 		InputConnection inputInfo = new InputConnection();
 		Map<String,String> connectionInfo = inputInfo.getInfo();
 		
@@ -46,6 +44,8 @@ public class Server {
 	private static class ClientHandler extends Thread{
 		private Socket socket;
 		private int clientNumber;
+		
+		//RECUPERATION DE LA HASHMAP CONTENANT TOUS LES USERS
 		writeJson write = new writeJson();
 		HashMap<String, String> users =  write.getHasmapJson();
 		
@@ -54,7 +54,7 @@ public class Server {
 		public ClientHandler(Socket socket, int clientNumber) {
 			this.socket = socket;
 			this.clientNumber = clientNumber;
-
+			//affichage dans la console serveur des utilisateurs (pour correction)
 			System.out.println(users);
 			
 			System.out.println("New connection with client#" + clientNumber + " at " + socket);	
@@ -62,30 +62,34 @@ public class Server {
 		
 		public void run() {
 			try {
+				
 			DataOutputStream out = new DataOutputStream(socket.getOutputStream());
 				
 			out.writeUTF("Hello from Server - you are client#" + clientNumber);
 				
-
-			// début de la réception sur le stream
 			DataInputStream in = new DataInputStream(socket.getInputStream());
 			System.out.println("début réception");
 			Sobel filtre = new Sobel();
 
-			//récupération username
+			//récupération userName du client
 			String userName = in.readUTF();
+			//vérifications si le client s'est déjà connecté
+				//client connu
 			if (users.containsKey(userName)){
 				out.writeByte(1);
+				//récupération mot de passe
 				String mdp = in.readUTF();
-				System.out.println(mdp.equals(users.get(userName)));
+				//vérification du mot de passe
 				while (mdp.equals(users.get(userName))==false) {
 					out.writeByte(1);
 					mdp = in.readUTF();
 				}
 				out.writeByte(2);
 			}
+				//client inconnu
 			if(users.containsKey(userName)==false) {
 				out.writeByte(3);
+				//création d'un mot de passe au hasard
 				String Creermdp = "";
 				Random rand = new Random();
 				for(int i = 0 ; i < 6 ; i++){
@@ -93,6 +97,7 @@ public class Server {
 				 Creermdp += c;
 				}
 				out.writeUTF(Creermdp);
+				//ajout du nouvel utilisateur
 				write.addUser( userName , Creermdp );
 				
 				out.writeByte(2);
