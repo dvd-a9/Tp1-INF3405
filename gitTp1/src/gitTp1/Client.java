@@ -17,11 +17,18 @@ public class Client {
 		String serverAddress = connectionInfo.get("ipAdress");
 		int serverPort = Integer.parseInt(connectionInfo.get("portNumber"));
 		
-		Scanner inputImageName = new Scanner(System.in);
+		socket = new Socket(serverAddress, serverPort);
+		System.out.format("The client is running %s: %d%n",serverAddress,serverPort);
+		
+		Scanner inputUserName = new Scanner(System.in);
+        System.out.println("Username : ");
+        String userName = "";
+        userName = inputUserName.nextLine();
+        
+        Scanner inputImageName = new Scanner(System.in);
 		System.out.println("Entrer le nom de l'image à traiter (avec le .png) : ");
 		String imageName = "";
 		imageName = inputImageName.nextLine();
-		
 		System.out.println(imageName);
 		String pathToImage = System.getProperty("user.dir")+"/src/gitTp1/";
 		String path = pathToImage+imageName;
@@ -29,15 +36,13 @@ public class Client {
 		//chargement de l'image de base
 		BufferedImage img = ImageIO.read(new File(path));
 		
-		socket = new Socket(serverAddress, serverPort);
-		System.out.format("The client is running %s: %d%n",serverAddress,serverPort);
-		
-		
 		DataInputStream in = new DataInputStream(socket.getInputStream());
 		String helloMessageFromServer = in.readUTF();
 		System.out.println(helloMessageFromServer);
 		
 		DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+		out.writeUTF(userName);
+		
 		ImageIO.write(img, "PNG", out); //envoi l'image
 		System.out.println("image envoyée au serveur");
 		out.writeUTF("Image envoyée par le client");
@@ -49,7 +54,7 @@ public class Client {
 		
 		try {
 		    // retrieve image
-			File outputfile = new File(pathToImage+"/imageFiltree.png");
+			File outputfile = new File(pathToImage+"/imageFiltree" + userName + ".png");
 		    ImageIO.write(fImage, "png", outputfile);
 		} catch (IOException e) {
 		}

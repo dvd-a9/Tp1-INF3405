@@ -8,11 +8,13 @@ import java.awt.image.BufferedImage;
 
 
 public class Server {
-	
 	private static ServerSocket listener;
 	
 	public static void main(String[] args) throws Exception {
 		int clientNumber = 0;
+		writeJson write = new writeJson();
+		write.addUser("defaultUser", "1234");
+		
 		
 		InputConnection inputInfo = new InputConnection();
 		Map<String,String> connectionInfo = inputInfo.getInfo();
@@ -59,6 +61,8 @@ public class Server {
 				/*in*/
 				// début de la réception sur le stream
 				DataInputStream in = new DataInputStream(socket.getInputStream());
+				String userName = in.readUTF();
+				
 				System.out.println("début réception");
 				//récupération de l'image envoyée
 				BufferedImage image = ImageIO.read(in);
