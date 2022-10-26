@@ -46,16 +46,15 @@ public class Server {
 	private static class ClientHandler extends Thread{
 		private Socket socket;
 		private int clientNumber;
-		Map<String, String> users = new HashMap<>();
+		writeJson write = new writeJson();
+		HashMap<String, String> users =  write.getHasmapJson();
 		
-		
+	
 		
 		public ClientHandler(Socket socket, int clientNumber) {
 			this.socket = socket;
 			this.clientNumber = clientNumber;
-			
-			users.put( "user1" , "motdepasse" );
-			users.put( "user2" , "motdepasse2" );
+
 			System.out.println(users);
 			
 			System.out.println("New connection with client#" + clientNumber + " at " + socket);	
@@ -78,15 +77,10 @@ public class Server {
 			if (users.containsKey(userName)){
 				out.writeByte(1);
 				String mdp = in.readUTF();
-				System.out.println(mdp);
-				System.out.println(users.get(userName));
 				System.out.println(mdp.equals(users.get(userName)));
-				//int essai = 0;
 				while (mdp.equals(users.get(userName))==false) {
 					out.writeByte(1);
-					out.writeUTF("Mot de passe incorrect :");
 					mdp = in.readUTF();
-					//essai++;
 				}
 				out.writeByte(2);
 			}
@@ -97,10 +91,10 @@ public class Server {
 				for(int i = 0 ; i < 6 ; i++){
 				 char c = (char)(rand.nextInt(26) + 97);
 				 Creermdp += c;
-				 System.out.print(Creermdp);
 				}
 				out.writeUTF(Creermdp);
-				users.addUser( userName , Creermdp );
+				write.addUser( userName , Creermdp );
+				
 				out.writeByte(2);
 			}
 
@@ -129,4 +123,3 @@ public class Server {
 		}
 	}
 }
-

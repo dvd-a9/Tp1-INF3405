@@ -52,22 +52,11 @@ public class writeJson{
 		return;
 	}
 	
-	public boolean validateUser(String username, String password) {
+	public HashMap getHasmapJson() {
 		JSONObject db = this.getDb(pathJson);
 		HashMap userList = (HashMap) db.get("users");
-
-		if (userList == null) {
-			addUser(username, password);
-			return true;
-		}
-
-		String userPassword = (String) userList.get(username);
-		if (userPassword == null) {
-			addUser(username, password);
-			return true;
-		}
-		return password.compareTo(userPassword) == 0 ? true : false;
-
+		
+		return userList;
 	}
 	
 }
